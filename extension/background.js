@@ -2,21 +2,46 @@
 const BRIDGE = "http://127.0.0.1:10010";
 const DEFAULTS = {
   enabled: true,
-  minSizeMB: 1,
-  extensions: "zip,rar,7z,exe,msi,iso,bin,mp4,mkv,avi,mp3,pdf,dmg,apk,tar,gz,webm,flv,mov,m4v,ts,m3u8,mpd"
+  minSizeMB: 0,
+  extensions: "zip,rar,7z,exe,msi,iso,bin,mp4,mkv,avi,mp3,m4a,flac,wav,ogg,pdf,dmg,apk,tar,gz,bz2,xz,tgz,webm,flv,mov,m4v,ts,m3u8,mpd,docx,xlsx,pptx,epub,torrent"
 };
 
 // tabId -> Map(url -> MediaInfo)
 const mediaByTab = new Map();
+// url -> referrer (captured from webRequest for downloads where item.referrer is empty)
+const recentReferrers = new Map();
+
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  (details) => {
+    if (!details.url || details.url.startsWith("http://127.0.0.1")) return;
+    const refHeader = details.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value;
+    const ref = refHeader || details.initiator || "";
+    if (ref && /^https?:/i.test(ref)) {
+      recentReferrers.set(details.url, ref);
+      if (recentReferrers.size > 500) {
+        const firstKey = recentReferrers.keys().next().value;
+        recentReferrers.delete(firstKey);
+      }
+    }
+  },
+  { urls: ["<all_urls>"] },
+  ["requestHeaders", "extraHeaders"]
+);
 
 async function getSettings() {
   const s = await chrome.storage.local.get(DEFAULTS);
+  // Migrate legacy default minSizeMB=1 if user never customized extensions
+  if (s.minSizeMB === 1 && s.extensions === "zip,rar,7z,exe,msi,iso,bin,mp4,mkv,avi,mp3,pdf,dmg,apk,tar,gz,webm,flv,mov,m4v,ts,m3u8,mpd") {
+    s.minSizeMB = 0;
+    s.extensions = DEFAULTS.extensions;
+    await chrome.storage.local.set({ minSizeMB: 0, extensions: DEFAULTS.extensions });
+  }
   return { ...DEFAULTS, ...s };
 }
 
 async function isBridgeAlive() {
   try {
-    const r = await fetch(`${BRIDGE}/api/status`, { signal: AbortSignal.timeout(800) });
+    const r = await fetch(`${BRIDGE}/api/status`, { signal: AbortSignal.timeout(1200) });
     return r.ok;
   } catch {
     return false;
@@ -36,7 +61,7 @@ async function sendToMyIdm({ url, filename, referrer, isHls = false, quality = n
   const body = {
     url,
     filename: filename || null,
-    referrer: referrer || null,
+    referrer: referrer || recentReferrers.get(url) || null,
     cookies: await cookieHeaderFor(url),
     userAgent: navigator.userAgent,
     isHls,
@@ -67,31 +92,182 @@ function cleanFilename(str) {
     .substring(0, 80);
 }
 
-// 1. Standart Tarayıcı İndirmelerini Devralma
-chrome.downloads.onCreated.addListener(async (item) => {
-  const settings = await getSettings();
-  if (!settings.enabled) return;
+// 1. Standart Tarayıcı İndirmelerini Devralma (onCreated + onDeterminingFilename + onChanged)
+const interceptedDownloadIds = new Set();
+const bypassedUrls = new Set();
+
+const MIME_TO_EXT = {
+  "application/zip": "zip",
+  "application/x-zip-compressed": "zip",
+  "application/x-rar-compressed": "rar",
+  "application/vnd.rar": "rar",
+  "application/x-7z-compressed": "7z",
+  "application/x-msdownload": "exe",
+  "application/x-msdos-program": "exe",
+  "application/vnd.microsoft.portable-executable": "exe",
+  "application/x-exe": "exe",
+  "application/dos-exe": "exe",
+  "application/x-msi": "msi",
+  "application/x-iso9660-image": "iso",
+  "application/pdf": "pdf",
+  "application/vnd.android.package-archive": "apk",
+  "application/gzip": "gz",
+  "application/x-gzip": "gz",
+  "application/x-tar": "tar",
+  "application/x-bzip2": "bz2",
+  "application/x-xz": "xz",
+  "application/x-apple-diskimage": "dmg",
+  "application/x-bittorrent": "torrent",
+  "application/epub+zip": "epub",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/x-matroska": "mkv",
+  "video/x-msvideo": "avi",
+  "video/quicktime": "mov",
+  "video/x-flv": "flv",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/flac": "flac",
+  "audio/wav": "wav",
+  "audio/ogg": "ogg"
+};
+
+function extractFilenameFromUrl(url) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const disp = parsed.searchParams.get("response-content-disposition") ||
+                 parsed.searchParams.get("content-disposition") ||
+                 parsed.searchParams.get("filename") ||
+                 parsed.searchParams.get("file") ||
+                 parsed.searchParams.get("name");
+    if (disp) {
+      const decoded = decodeURIComponent(disp);
+      const m = /filename\*?=['"]?(?:UTF-8'')?([^;"'\r\n]+)/i.exec(decoded);
+      if (m && m[1]) return m[1].trim();
+      if (/\.[a-z0-9]{1,8}$/i.test(decoded)) return decoded.trim();
+    }
+    const lastSeg = decodeURIComponent(parsed.pathname.split("/").pop() || "");
+    if (/\.[a-z0-9]{1,8}$/i.test(lastSeg)) return lastSeg;
+  } catch {}
+  return "";
+}
+
+function resolveDownloadExtension(filename, url, mime) {
+  if (filename) {
+    const cleanName = filename.split(/[\\/]/).pop().split("?")[0];
+    const m = /\.([a-z0-9]{1,8})$/i.exec(cleanName);
+    if (m) return m[1].toLowerCase();
+  }
+  const urlFname = extractFilenameFromUrl(url);
+  if (urlFname) {
+    const m = /\.([a-z0-9]{1,8})$/i.exec(urlFname);
+    if (m) return m[1].toLowerCase();
+  }
+  if (mime) {
+    const cleanMime = mime.split(";")[0].trim().toLowerCase();
+    if (MIME_TO_EXT[cleanMime]) return MIME_TO_EXT[cleanMime];
+  }
+  return "";
+}
+
+async function tryInterceptDownload(item, suggestedFilename = null) {
+  if (!item || interceptedDownloadIds.has(item.id)) return false;
+  if (item.state && item.state !== "in_progress") return false;
 
   const url = item.finalUrl || item.url;
-  if (!/^https?:/i.test(url)) return;
+  if (!url || !/^https?:/i.test(url)) return false;
+  if (url.startsWith("http://127.0.0.1:10010")) return false;
+  if (bypassedUrls.has(url) || bypassedUrls.has(item.url)) return false;
 
-  const allowed = settings.extensions.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-  const extMatch = /\.([a-z0-9]{1,6})(?:$|\?)/i.exec(item.filename || url || "");
-  const ext = extMatch ? extMatch[1].toLowerCase() : "";
-  const sizeOk = item.totalBytes <= 0 || item.totalBytes >= settings.minSizeMB * 1024 * 1024;
+  if (item.startTime) {
+    const ageMs = Date.now() - new Date(item.startTime).getTime();
+    if (ageMs > 30000) return false;
+  }
 
-  if (!allowed.includes(ext) || !sizeOk) return;
-  if (!(await isBridgeAlive())) return;
+  const settings = await getSettings();
+  if (!settings.enabled) return false;
 
+  const allowed = settings.extensions
+    .split(",")
+    .map(s => s.trim().toLowerCase().replace(/^\./, ""))
+    .filter(Boolean);
+
+  const rawFilename = suggestedFilename || item.filename || extractFilenameFromUrl(url) || extractFilenameFromUrl(item.url);
+  const ext = resolveDownloadExtension(rawFilename, url, item.mime) ||
+              resolveDownloadExtension(rawFilename, item.url, item.mime);
+
+  if (!ext || !allowed.includes(ext)) return false;
+
+  const minBytes = (settings.minSizeMB ?? 0) * 1024 * 1024;
+  if (minBytes > 0 && item.totalBytes > 0 && item.totalBytes < minBytes) {
+    return false;
+  }
+
+  if (!(await isBridgeAlive())) return false;
+
+  interceptedDownloadIds.add(item.id);
   try {
     await chrome.downloads.cancel(item.id);
     await chrome.downloads.erase({ id: item.id });
-    const fname = item.filename ? item.filename.split(/[\\/]/).pop() : null;
-    await sendToMyIdm({ url, filename: fname, referrer: item.referrer });
+
+    let fname = rawFilename ? rawFilename.split(/[\\/]/).pop() : null;
+    if (fname && !/\.[a-z0-9]{1,8}$/i.test(fname) && ext) {
+      fname = `${fname}.${ext}`;
+    }
+
+    let ref = item.referrer || recentReferrers.get(url) || recentReferrers.get(item.url) || null;
+    if (!ref) {
+      try {
+        const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (activeTab?.url && /^https?:/i.test(activeTab.url)) {
+          ref = activeTab.url;
+        }
+      } catch {}
+    }
+
+    await sendToMyIdm({
+      url,
+      filename: fname,
+      referrer: ref,
+      isHls: ext === "m3u8"
+    });
+    return true;
   } catch (e) {
-    console.warn("MyIDM devralma başarısız, tarayıcıya geri bırakılıyor:", e);
+    console.warn("NovaGet devralma başarısız, tarayıcıya geri bırakılıyor:", e);
+    bypassedUrls.add(url);
+    if (item.url) bypassedUrls.add(item.url);
+    setTimeout(() => {
+      bypassedUrls.delete(url);
+      if (item.url) bypassedUrls.delete(item.url);
+    }, 15000);
     chrome.downloads.download({ url }).catch(() => {});
+    return false;
   }
+}
+
+chrome.downloads.onCreated.addListener((item) => {
+  tryInterceptDownload(item);
+});
+
+if (chrome.downloads.onDeterminingFilename) {
+  chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
+    const resolvedName = item.filename;
+    // Call suggest() immediately so Chrome unlocks the download item for cancel/erase
+    try { suggest(); } catch {}
+    tryInterceptDownload(item, resolvedName);
+  });
+}
+
+chrome.downloads.onChanged.addListener(async (delta) => {
+  if (!delta.filename || !delta.filename.current) return;
+  if (interceptedDownloadIds.has(delta.id)) return;
+  try {
+    const [item] = await chrome.downloads.search({ id: delta.id });
+    if (item) {
+      await tryInterceptDownload(item, delta.filename.current);
+    }
+  } catch {}
 });
 
 // 2. Gelişmiş Video & Medya İstekleri Dinleyicisi

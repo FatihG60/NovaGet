@@ -12,6 +12,8 @@
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const tabId = tab?.id;
 
+  let settingsInitialized = false;
+
   async function refresh() {
     try {
       const resp = await chrome.runtime.sendMessage({ type: "status", tabId });
@@ -26,10 +28,11 @@
         statusText.textContent = "Masaüstü Kapalı";
       }
 
-      // Settings
-      if (resp.settings) {
+      // Settings (only populate once on popup open so periodic refresh doesn't overwrite user edits)
+      if (resp.settings && !settingsInitialized) {
+        settingsInitialized = true;
         enabledBox.checked = !!resp.settings.enabled;
-        minSizeBox.value = resp.settings.minSizeMB ?? 1;
+        minSizeBox.value = resp.settings.minSizeMB ?? 0;
         extsBox.value = resp.settings.extensions || "";
       }
 
@@ -40,6 +43,17 @@
       statusText.textContent = "Hata";
     }
   }
+
+  enabledBox.addEventListener("change", async () => {
+    await chrome.runtime.sendMessage({
+      type: "saveSettings",
+      settings: {
+        enabled: enabledBox.checked,
+        minSizeMB: parseFloat(minSizeBox.value) || 0,
+        extensions: extsBox.value
+      }
+    });
+  });
 
   function renderMedia(list) {
     mediaCountEl.textContent = String(list.length);
