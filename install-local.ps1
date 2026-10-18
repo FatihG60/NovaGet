@@ -16,19 +16,17 @@ $ExtInstallDir = Join-Path $InstallDir "Extension"
 Get-Process -Name "NovaGet", "MyIdm.Desktop" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
 
-# 2. Build publish output if not already present
-if (-not (Test-Path (Join-Path $PublishDir "NovaGet.exe"))) {
-    Write-Host "Publishing standalone NovaGet.exe..." -ForegroundColor Cyan
-    dotnet publish "$Root\desktop\MyIdm.Desktop.csproj" `
-        -c Release `
-        -r win-x64 `
-        --self-contained true `
-        -p:PublishSingleFile=true `
-        -p:IncludeNativeLibrariesForSelfExtract=true `
-        -p:DebugType=None `
-        -p:DebugSymbols=false `
-        -o $PublishDir
-}
+# 2. Build publish output
+Write-Host "Publishing standalone NovaGet.exe..." -ForegroundColor Cyan
+dotnet publish "$Root\desktop\MyIdm.Desktop.csproj" `
+    -c Release `
+    -r win-x64 `
+    --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:DebugType=None `
+    -p:DebugSymbols=false `
+    -o $PublishDir
 
 # 3. Copy files to %LOCALAPPDATA%\Programs\NovaGet
 Write-Host "Installing NovaGet to: $InstallDir" -ForegroundColor Cyan

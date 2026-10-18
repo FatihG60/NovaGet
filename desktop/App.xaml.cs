@@ -81,9 +81,16 @@ public partial class App : Application
 
         base.OnStartup(e);
 
-        var mainWindow = new MainWindow();
-        MainWindow = mainWindow;
-        mainWindow.Show();
+        try
+        {
+            var mainWindow = new MainWindow();
+            MainWindow = mainWindow;
+            mainWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            Log("OnStartup", ex);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

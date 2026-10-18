@@ -15,7 +15,7 @@ public sealed class SegmentBarViewModel : INotifyPropertyChanged
     private string _downloadedText = "";
     private double _progressPercent;
     private string _statusBadge = "Bekliyor";
-    private Brush _barBrush = new SolidColorBrush(Color.FromRgb(56, 189, 248));
+    private Brush _barBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
 
     public int Id { get; init; }
 
@@ -56,10 +56,15 @@ public sealed class SegmentBarViewModel : INotifyPropertyChanged
 
 public sealed class DownloadItemViewModel : INotifyPropertyChanged
 {
-    private static readonly Brush ActiveBrush = new SolidColorBrush(Color.FromRgb(56, 189, 248));   // Sky 400
-    private static readonly Brush CompletedBrush = new SolidColorBrush(Color.FromRgb(16, 185, 129)); // Emerald 500
-    private static readonly Brush PausedBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));   // Amber 500
-    private static readonly Brush ErrorBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));     // Red 500
+    private static readonly Brush ActiveBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));    // Cobalt 500 (#3B82F6)
+    private static readonly Brush CompletedBrush = new SolidColorBrush(Color.FromRgb(16, 185, 129)); // Emerald 500 (#10B981)
+    private static readonly Brush PausedBrush = new SolidColorBrush(Color.FromRgb(138, 143, 158));   // Neutral Slate (#8A8F9E)
+    private static readonly Brush ErrorBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));     // Red 500 (#EF4444)
+
+    private const string PausePath = "M6,4 L10,4 L10,20 L6,20 Z M14,4 L18,4 L18,20 L14,20 Z";
+    private const string PlayPath = "M5,3 L19,12 L5,21 L5,3 Z";
+    private const string FolderPath = "M22,19 C22,20.1 21.1,21 20,21 L4,21 C2.9,21 2,20.1 2,19 L2,5 C2,3.9 2.9,3 4,3 L9,3 L11,6 L20,6 C21.1,6 22,6.9 22,8 L22,19 Z";
+    private const string RetryPath = "M23,4 L23,10 L17,10 M1,20 L1,14 L7,14 M3.51,9 A9,9 0 0,1 18.36,5.64 L23,10 M1,14 L5.64,18.36 A9,9 0 0,0 20.49,15";
 
     private string _statusText = "Hazırlanıyor...";
     private Brush _statusBrush = ActiveBrush;
@@ -68,7 +73,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
     private string _speedText = "0,00 MB/sn";
     private string _etaText = "--:--";
     private string _segmentsSummary = "1 Parça";
-    private string _actionButtonText = "⏸ Duraklat";
+    private string _actionButtonText = "Duraklat";
+    private string _actionIconData = PausePath;
     private bool _isRunning;
     private bool _isCompleted;
     private long _lastDownloadedBytes;
@@ -124,13 +130,15 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         {
             StatusText = !string.IsNullOrWhiteSpace(statusText) ? statusText : "Tamamlandı";
             StatusBrush = CompletedBrush;
-            ActionButtonText = "📂 Klasörde Göster";
+            ActionButtonText = "Klasörde Göster";
+            ActionIconData = FolderPath;
         }
         else
         {
-            StatusText = "Duraklatıldı (Devam etmeye hazır)";
+            StatusText = "Duraklatıldı · Devam etmeye hazır";
             StatusBrush = PausedBrush;
-            ActionButtonText = "▶ Devam Et";
+            ActionButtonText = "Devam Et";
+            ActionIconData = PlayPath;
         }
     }
 
@@ -139,31 +147,17 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         get
         {
             string ext = Path.GetExtension(FileName).ToLowerInvariant();
-            if (Quality == "audio" || ext is ".mp3" or ".m4a" or ".wav" or ".flac" or ".aac") return "SES";
+            if (Quality == "audio" || ext is ".mp3" or ".m4a" or ".wav" or ".flac" or ".aac") return "AUDIO";
             if (IsHlsStream || YtDlpStreamDownloader.ShouldUseYtDlp(Url, Headers?.Referrer) ||
                 ext is ".mp4" or ".mkv" or ".webm" or ".avi" or ".mov" or ".ts" or ".flv") return "VIDEO";
-            if (ext is ".zip" or ".rar" or ".7z" or ".tar" or ".gz" or ".iso") return "ARŞİV";
-            if (ext is ".exe" or ".msi" or ".bin" or ".apk" or ".dmg") return "PROGRAM";
-            if (ext is ".pdf" or ".doc" or ".docx" or ".txt") return "BELGE";
-            return "DOSYA";
+            if (ext is ".zip" or ".rar" or ".7z" or ".tar" or ".gz" or ".iso") return "ARCHIVE";
+            if (ext is ".exe" or ".msi" or ".bin" or ".apk" or ".dmg") return "BINARY";
+            if (ext is ".pdf" or ".doc" or ".docx" or ".txt") return "DOC";
+            return "FILE";
         }
     }
 
-    public Brush CategoryBackground
-    {
-        get
-        {
-            return CategoryText switch
-            {
-                "VIDEO" => new SolidColorBrush(Color.FromRgb(79, 70, 229)),     // Indigo 600
-                "ARŞİV" => new SolidColorBrush(Color.FromRgb(217, 119, 6)),      // Amber 600
-                "PROGRAM" => new SolidColorBrush(Color.FromRgb(2, 132, 199)),    // Sky 600
-                "SES" => new SolidColorBrush(Color.FromRgb(219, 39, 119)),       // Pink 600
-                "BELGE" => new SolidColorBrush(Color.FromRgb(5, 150, 105)),      // Emerald 600
-                _ => new SolidColorBrush(Color.FromRgb(71, 85, 105))             // Slate 600
-            };
-        }
-    }
+    public Brush CategoryBackground => new SolidColorBrush(Color.FromRgb(23, 26, 36)); // Restrained Carbon-Slate #171A24
 
     public ObservableCollection<SegmentBarViewModel> SegmentBars { get; } = [];
 
@@ -215,6 +209,12 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         set { _actionButtonText = value; OnPropertyChanged(); }
     }
 
+    public string ActionIconData
+    {
+        get => _actionIconData;
+        set { _actionIconData = value; OnPropertyChanged(); }
+    }
+
     public bool IsRunning
     {
         get => _isRunning;
@@ -235,10 +235,11 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
 
         IsRunning = true;
         StatusText = YtDlpStreamDownloader.ShouldUseYtDlp(Url, Headers?.Referrer)
-            ? "YouTube / Medya Akışı Çözümleniyor..."
-            : (IsHlsStream ? "HLS Akışı İndiriliyor" : "İndiriliyor");
+            ? "Medya akışı çözümleniyor..."
+            : (IsHlsStream ? "HLS akışı indiriliyor" : "İndiriliyor");
         StatusBrush = ActiveBrush;
-        ActionButtonText = "⏸ Duraklat";
+        ActionButtonText = "Duraklat";
+        ActionIconData = PausePath;
         _lastSpeedSampleTime = DateTime.UtcNow;
         _cts = new CancellationTokenSource();
 
@@ -270,7 +271,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
             StatusBrush = PausedBrush;
             SpeedText = "0,00 MB/sn";
             EtaText = "Duraklatıldı";
-            ActionButtonText = "▶ Devam Et";
+            ActionButtonText = "Devam Et";
+            ActionIconData = PlayPath;
             foreach (var bar in SegmentBars)
             {
                 if (bar.ProgressPercent < 100.0)
@@ -287,7 +289,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
             StatusText = $"Hata: {ex.Message}";
             StatusBrush = ErrorBrush;
             SpeedText = "0,00 MB/sn";
-            ActionButtonText = "🔄 Tekrar Dene";
+            ActionButtonText = "Tekrar Dene";
+            ActionIconData = RetryPath;
             StateChanged?.Invoke(this);
         }
     }
@@ -366,7 +369,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         StatusBrush = CompletedBrush;
         SpeedText = $"{metrics.ThroughputMBps:F2} MB/sn (Ort.)";
         EtaText = "00:00";
-        ActionButtonText = "📂 Klasörde Göster";
+        ActionButtonText = "Klasörde Göster";
+        ActionIconData = FolderPath;
     }
 
     private async Task RunHlsDownloadAsync(CancellationToken ct)
@@ -449,7 +453,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         StatusText = "HLS Birleştirildi (.ts/.mp4)";
         StatusBrush = CompletedBrush;
         EtaText = "00:00";
-        ActionButtonText = "📂 Klasörde Göster";
+        ActionButtonText = "Klasörde Göster";
+        ActionIconData = FolderPath;
 
         if (SegmentBars.Count > 0)
         {
@@ -598,7 +603,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         StatusBrush = CompletedBrush;
         SpeedText = $"{avgSpeed:F2} MB/sn (Ort.)";
         EtaText = "00:00";
-        ActionButtonText = "📂 Klasörde Göster";
+        ActionButtonText = "Klasörde Göster";
+        ActionIconData = FolderPath;
 
         foreach (var bar in SegmentBars)
         {
@@ -655,12 +661,12 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
 
             if (s.IsCompleted)
             {
-                bar.StatusBadge = s.OverlapVerified ? "✓ Tamamlandı (64B Overlap)" : "✓ Tamamlandı";
+                bar.StatusBadge = s.OverlapVerified ? "Tamamlandı · 64B Doğrulandı" : "Tamamlandı";
                 bar.BarBrush = CompletedBrush;
             }
             else if (s.IsActive)
             {
-                bar.StatusBadge = s.OverlapVerified ? "⬇ Aktif (✓ 64B Overlap)" : "⬇ İndiriliyor";
+                bar.StatusBadge = s.OverlapVerified ? "Aktif · 64B Doğrulandı" : "İndiriliyor";
                 bar.BarBrush = ActiveBrush;
             }
             else
@@ -683,8 +689,8 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
             SizeText = $"{downloadedMb:F2} MB (Canlı Akış)";
         }
 
-        SegmentsSummary = $"{segments.Count} Parça ({activeCount} Aktif, {dynamicSplits} Bölünme" +
-                          (overlapPassed > 0 ? $", {overlapPassed} Overlap✓)" : ")");
+        SegmentsSummary = $"{segments.Count} Parça · {activeCount} Aktif · {dynamicSplits} Bölünme" +
+                          (overlapPassed > 0 ? $" · {overlapPassed} Doğrulama" : "");
 
         var now = DateTime.UtcNow;
         double dt = (now - _lastSpeedSampleTime).TotalSeconds;

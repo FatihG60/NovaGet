@@ -5,16 +5,17 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 380px;
+      width: 376px;
       margin: 0;
-      font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0B1120;
-      color: #F8FAFC;
+      font: 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", Inter, "Segoe UI", sans-serif;
+      background: #0A0B0E;
+      color: #EDEDEF;
+      -webkit-font-smoothing: antialiased;
     }
     header {
-      padding: 12px 16px;
-      background: #111827;
-      border-bottom: 1px solid #1E293B;
+      padding: 10px 14px;
+      background: #0F1117;
+      border-bottom: 1px solid #1C202B;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -22,86 +23,85 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .brand img {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
     }
     .brand h1 {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      background: linear-gradient(135deg, #38BDF8, #818CF8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      color: #EDEDEF;
     }
     .pill {
       font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 12px;
-      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      background: #14171F;
+      border: 1px solid #1C202B;
+      color: #8A8F9E;
     }
     .pill .dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
     }
-    .ok { background: rgba(6, 78, 59, 0.7); color: #34D399; border: 1px solid #059669; }
-    .ok .dot { background: #34D399; box-shadow: 0 0 6px #34D399; }
-    .bad { background: rgba(69, 10, 10, 0.7); color: #FCA5A5; border: 1px solid #DC2626; }
+    .ok .dot { background: #10B981; }
     .bad .dot { background: #EF4444; }
 
     section {
-      padding: 14px 16px;
-      border-bottom: 1px solid #1E293B;
+      padding: 12px 14px;
+      border-bottom: 1px solid #1C202B;
     }
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 9px;
     }
     h2 {
-      font-size: 12px;
-      color: #94A3B8;
+      font-size: 11px;
+      color: #8A8F9E;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
     .badge-count {
-      background: #1E293B;
-      color: #38BDF8;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 8px;
+      background: #14171F;
+      border: 1px solid #1C202B;
+      color: #8A8F9E;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-variant-numeric: tabular-nums;
     }
 
     #mediaList {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       max-height: 240px;
       overflow-y: auto;
     }
     .media-card {
-      background: #1E293B;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
+      background: #0F1117;
+      border: 1px solid #1C202B;
+      border-radius: 5px;
+      padding: 9px 10px;
       display: flex;
       flex-direction: column;
       gap: 6px;
       transition: border-color 0.15s ease;
     }
     .media-card:hover {
-      border-color: #38BDF8;
+      border-color: #282E3D;
     }
     .media-title-row {
       display: flex;
@@ -110,29 +110,24 @@
       gap: 8px;
     }
     .media-title {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #F1F5F9;
+      font-size: 12px;
+      font-weight: 500;
+      color: #EDEDEF;
       word-break: break-word;
-      line-height: 1.3;
+      line-height: 1.35;
     }
     .format-tag {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 3px;
       text-transform: uppercase;
       white-space: nowrap;
+      background: #171A24;
+      border: 1px solid #262B38;
+      color: #8A8F9E;
     }
-    .format-HLS-MASTER { background: #4F46E5; color: #EEF2FF; }
-    .format-HLS-VIDEO { background: #0284C7; color: #E0F2FE; }
-    .format-HLS-AUDIO { background: #D97706; color: #FEF3C7; }
-    .format-HLS { background: #4338CA; color: #E0E7FF; }
-    .format-DASH { background: #6D28D9; color: #EDE9FE; }
-    .format-MP4 { background: #0369A1; color: #E0F2FE; }
-    .format-WebM { background: #0F766E; color: #CCFBF1; }
-    .format-AUDIO { background: #B45309; color: #FEF3C7; }
-    .format-VIDEO { background: #374151; color: #F3F4F6; }
 
     .media-meta-row {
       display: flex;
@@ -141,8 +136,9 @@
       margin-top: 2px;
     }
     .media-size {
-      font-size: 11.5px;
-      color: #94A3B8;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 11px;
+      color: #8A8F9E;
       font-variant-numeric: tabular-nums;
     }
     .action-group {
@@ -151,45 +147,41 @@
       gap: 6px;
     }
     .quality-select {
-      background: #0F172A;
-      color: #E2E8F0;
-      border: 1px solid #334155;
-      border-radius: 6px;
+      background: #14171F;
+      color: #D4D7E0;
+      border: 1px solid #262B38;
+      border-radius: 4px;
       padding: 4px 6px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       outline: none;
       cursor: pointer;
     }
     .quality-select:focus, .quality-select:hover {
-      border-color: #38BDF8;
+      border-color: #353C4F;
     }
     .btn-download {
-      background: linear-gradient(135deg, #0284C7, #2563EB);
+      background: #2563EB;
       color: #fff;
-      border: 0;
-      border-radius: 6px;
-      padding: 5px 12px;
-      font-size: 11.5px;
+      border: 1px solid #3B82F6;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: all 0.15s ease;
+      transition: background 0.15s ease;
     }
     .btn-download:hover {
-      background: linear-gradient(135deg, #0369A1, #1D4ED8);
-      transform: translateY(-1px);
-    }
-    .btn-download:active {
-      transform: translateY(0);
+      background: #1D4ED8;
     }
     .empty-state {
-      padding: 20px 10px;
+      padding: 18px 10px;
       text-align: center;
-      color: #64748B;
-      font-size: 12px;
+      color: #565B6A;
+      font-size: 11.5px;
       line-height: 1.5;
     }
 
@@ -197,14 +189,14 @@
     .settings-group {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
     label {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #CBD5E1;
-      font-size: 12px;
+      color: #D4D7E0;
+      font-size: 11.5px;
       cursor: pointer;
     }
     .input-row {
@@ -214,33 +206,37 @@
     }
     .input-row span {
       font-size: 11px;
-      color: #94A3B8;
+      color: #8A8F9E;
     }
     input[type=text], input[type=number] {
       width: 100%;
-      background: #0F172A;
-      color: #F8FAFC;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 6px 9px;
-      font-size: 12px;
+      background: #0F1117;
+      color: #EDEDEF;
+      border: 1px solid #262B38;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 11.5px;
     }
     input[type=text]:focus, input[type=number]:focus {
       outline: none;
-      border-color: #38BDF8;
+      border-color: #3B82F6;
     }
     .btn-save {
-      background: #334155;
-      color: #F8FAFC;
-      border: 0;
-      border-radius: 6px;
-      padding: 8px;
-      font-weight: 600;
+      background: #171A24;
+      color: #D4D7E0;
+      border: 1px solid #262B38;
+      border-radius: 4px;
+      padding: 7px;
+      font-size: 11.5px;
+      font-weight: 500;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
     .btn-save:hover {
-      background: #475569;
+      background: #1E2230;
+      border-color: #353C4F;
+      color: #FFFFFF;
     }
   </style>
 </head>
@@ -258,13 +254,13 @@
 
   <section>
     <div class="section-header">
-      <h2>Bu Sekmedeki Medyalar</h2>
+      <h2>Bu Sekmedeki Medya Akışları</h2>
       <span id="mediaCount" class="badge-count">0</span>
     </div>
     <div id="mediaList">
       <div class="empty-state">
         Henüz medya akışı tespit edilmedi.<br>
-        Sayfada bir video/ses oynatıldığında otomatik yakalanır.
+        Sayfada bir video veya ses oynatıldığında otomatik yakalanır.
       </div>
     </div>
   </section>

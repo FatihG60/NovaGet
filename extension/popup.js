@@ -97,10 +97,10 @@
       formatTag.className = `format-tag format-${item.format || 'VIDEO'}`;
 
       let label = item.format || "VIDEO";
-      if (item.format === "HLS-MASTER") label = "🎬 Video (Master)";
-      else if (item.format === "HLS-VIDEO") label = "🎬 Video Akışı";
-      else if (item.format === "HLS-AUDIO") label = "🎵 Ses (Audio Only)";
-      else if (item.format === "AUDIO") label = "🎵 Ses Dosyası";
+      if (item.format === "HLS-MASTER") label = "HLS MASTER";
+      else if (item.format === "HLS-VIDEO") label = "HLS VIDEO";
+      else if (item.format === "HLS-AUDIO") label = "HLS AUDIO";
+      else if (item.format === "AUDIO") label = "AUDIO";
       formatTag.textContent = label;
 
       titleRow.appendChild(titleSpan);
@@ -124,13 +124,13 @@
         <option value="1080">1080p</option>
         <option value="720">720p</option>
         <option value="480">480p</option>
-        <option value="audio">🎵 MP3</option>
+        <option value="audio">MP3 (Ses)</option>
       `;
 
       const dlBtn = document.createElement("button");
       dlBtn.className = "btn-download";
       dlBtn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -140,7 +140,7 @@
 
       dlBtn.addEventListener("click", async () => {
         dlBtn.disabled = true;
-        dlBtn.textContent = "⏳ Gönderiliyor...";
+        dlBtn.textContent = "Gönderiliyor...";
         const selectedQuality = qualitySelect.value || "best";
         let fname = item.filename || "video.mp4";
         if (selectedQuality === "audio") {
@@ -157,15 +157,15 @@
           });
 
           if (res && res.ok) {
-            dlBtn.textContent = "✓ Aktarıldı!";
+            dlBtn.textContent = "Aktarıldı";
             dlBtn.style.background = "#059669";
           } else {
-            dlBtn.textContent = "Hata!";
+            dlBtn.textContent = "Hata";
             dlBtn.style.background = "#DC2626";
             setTimeout(() => { dlBtn.disabled = false; dlBtn.textContent = "İndir"; dlBtn.style.background = ""; }, 2000);
           }
         } catch (err) {
-          dlBtn.textContent = "Hata!";
+          dlBtn.textContent = "Hata";
           setTimeout(() => { dlBtn.disabled = false; dlBtn.textContent = "İndir"; }, 2000);
         }
       });

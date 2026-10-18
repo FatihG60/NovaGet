@@ -46,7 +46,7 @@ public partial class MainWindow : Window
         _uiTimer.Tick += (_, _) =>
         {
             double totalSpeed = _downloads.Sum(d => d.CurrentSpeedMBps);
-            TotalSpeedBadge.Text = $"⚡ {totalSpeed:F2} MB/sn";
+            TotalSpeedBadge.Text = $"{totalSpeed:F2} MB/sn";
         };
         _uiTimer.Start();
 
@@ -128,8 +128,8 @@ public partial class MainWindow : Window
                 if (_settings.ShowCompletionNotifications)
                 {
                     _trayService?.ShowNotification(
-                        "✅ İndirme Tamamlandı — NovaGet",
-                        $"{completedVm.FileName}\nBoyut: {completedVm.SizeText} • Hız: {completedVm.SpeedText}");
+                        "İndirme Tamamlandı — NovaGet",
+                        $"{completedVm.FileName}\nBoyut: {completedVm.SizeText} · Hız: {completedVm.SpeedText}");
                 }
             });
         };
@@ -229,7 +229,7 @@ public partial class MainWindow : Window
 
         var showItem = new MenuItem
         {
-            Header = "⚡  NovaGet Arayüzünü Aç",
+            Header = "NovaGet Arayüzünü Aç",
             Style = itemStyle,
             FontWeight = FontWeights.SemiBold
         };
@@ -238,7 +238,7 @@ public partial class MainWindow : Window
 
         var folderItem = new MenuItem
         {
-            Header = "📂  İndirilenler Klasörünü Aç",
+            Header = "İndirilenler Klasörünü Aç",
             Style = itemStyle
         };
         folderItem.Click += (_, _) => OpenDownloadsFolder();
@@ -246,7 +246,7 @@ public partial class MainWindow : Window
 
         var settingsItem = new MenuItem
         {
-            Header = "⚙️  Ayarlar",
+            Header = "Ayarlar",
             Style = itemStyle
         };
         settingsItem.Click += (_, _) =>
@@ -261,7 +261,7 @@ public partial class MainWindow : Window
 
         var exitItem = new MenuItem
         {
-            Header = "✕  Tamamen Çıkış Yap",
+            Header = "Tamamen Çıkış Yap",
             Style = dangerStyle,
             FontWeight = FontWeights.SemiBold
         };
@@ -424,12 +424,12 @@ public partial class MainWindow : Window
 
         _activeFilter = filterTag;
 
-        var modernStyle = (Style)FindResource("ModernButton");
-        var ghostStyle = (Style)FindResource("GhostButton");
+        var activeStyle = (Style)FindResource("FilterTabActive");
+        var inactiveStyle = (Style)FindResource("FilterTabInactive");
 
-        FilterAllBtn.Style = filterTag == "all" ? modernStyle : ghostStyle;
-        FilterActiveBtn.Style = filterTag == "active" ? modernStyle : ghostStyle;
-        FilterCompletedBtn.Style = filterTag == "completed" ? modernStyle : ghostStyle;
+        FilterAllBtn.Style = filterTag == "all" ? activeStyle : inactiveStyle;
+        FilterActiveBtn.Style = filterTag == "active" ? activeStyle : inactiveStyle;
+        FilterCompletedBtn.Style = filterTag == "completed" ? activeStyle : inactiveStyle;
 
         _downloadsView.Refresh();
     }
@@ -666,7 +666,7 @@ public partial class MainWindow : Window
     {
         if (DownloadsListBox.SelectedItem is DownloadItemViewModel vm)
         {
-            InspectorTitleText.Text = $"📊 Bağlantı Detayları — {vm.FileName} ({vm.SegmentsSummary})";
+            InspectorTitleText.Text = $"Bağlantı Telemetrisi — {vm.FileName} ({vm.SegmentsSummary})";
             SegmentsItemsControl.ItemsSource = vm.SegmentBars;
         }
     }
