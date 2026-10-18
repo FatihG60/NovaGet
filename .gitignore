@@ -3,6 +3,7 @@ bin/
 obj/
 out/
 publish/
+dist/
 *.user
 *.suo
 *.userosscache
@@ -20,6 +21,7 @@ bench_out/
 *.seg
 .hls_cache*/
 *.log
+*.pem
 
 ## Visual Studio / Rider / VS Code
 .vs/
