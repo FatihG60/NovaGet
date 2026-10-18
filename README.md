@@ -86,13 +86,12 @@ flowchart TB
 │   ├── MainWindow.xaml                 # Custom chromeless dark UI & live segment visualization
 │   ├── MainWindow.xaml.cs              # Main window controller & engine orchestration
 │   └── MyIdm.Desktop.csproj
-├── extension/                          # NovaGet Browser Extension (Chromium Manifest V3)
-│   ├── manifest.json                   # MV3 configuration and permissions
-│   ├── background.js                   # Network stream detector & header/cookie synchronization
-│   ├── content.js / content.css        # In-page floating download button & quality selector
-│   ├── injected.js                     # Main-world fetch/XHR/#EXTM3U inspector
-│   └── popup.html / popup.js           # Extension toolbar popup interface
-└── rust/                               # Companion Rust async segment engine benchmark
+└── extension/                          # NovaGet Browser Extension (Chromium Manifest V3)
+    ├── manifest.json                   # MV3 configuration and permissions
+    ├── background.js                   # Network stream detector & header/cookie synchronization
+    ├── content.js / content.css        # In-page floating download button & quality selector
+    ├── injected.js                     # Main-world fetch/XHR/#EXTM3U inspector
+    └── popup.html / popup.js           # Extension toolbar popup interface
 ```
 
 ---
