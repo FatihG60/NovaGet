@@ -196,7 +196,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RestoreFromTray()
+    public void RestoreFromTray()
     {
         if (!IsVisible)
         {
@@ -206,7 +206,11 @@ public partial class MainWindow : Window
         {
             WindowState = WindowState.Normal;
         }
+        bool prevTopmost = Topmost;
+        Topmost = true;
         Activate();
+        Focus();
+        Topmost = prevTopmost;
     }
 
     private void ShowTrayContextMenu()
