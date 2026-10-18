@@ -2,16 +2,19 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace MyIdm.Desktop.Services;
 
 /// <summary>
 /// Pure Win32 Shell_NotifyIconW service for WPF.
-/// Provides System Tray icon, left/right click handling, and native Windows Balloon / Toast notifications
-/// without requiring System.Windows.Forms.
+/// Provides System Tray icon (rendered directly from embedded WPF resource Assets/icon.png),
+/// left/right click handling, and native Windows Balloon / Toast notifications.
 /// </summary>
 public sealed class SystemTrayService : IDisposable
 {
+    private const int WM_NULL = 0x0000;
     private const int WM_USER = 0x0400;
     private const int WM_TRAYICON = WM_USER + 101;
 
@@ -31,8 +34,6 @@ public sealed class SystemTrayService : IDisposable
     private const uint NIF_INFO = 0x00000010;
 
     private const uint NIIF_INFO = 0x00000001;
-    private const uint IMAGE_ICON = 1;
-    private const uint LR_LOADFROMFILE = 0x00000010;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct NOTIFYICONDATAW
@@ -57,18 +58,76 @@ public sealed class SystemTrayService : IDisposable
         public IntPtr hBalloonIcon;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ICONINFO
+    {
+        public bool fIcon;
+        public int xHotspot;
+        public int yHotspot;
+        public IntPtr hbmMask;
+        public IntPtr hbmColor;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAPV5HEADER
+    {
+        public uint bV5Size;
+        public int bV5Width;
+        public int bV5Height;
+        public ushort bV5Planes;
+        public ushort bV5BitCount;
+        public uint bV5Compression;
+        public uint bV5SizeImage;
+        public int bV5XPelsPerMeter;
+        public int bV5YPelsPerMeter;
+        public uint bV5ClrUsed;
+        public uint bV5ClrImportant;
+        public uint bV5RedMask;
+        public uint bV5GreenMask;
+        public uint bV5BlueMask;
+        public uint bV5AlphaMask;
+        public uint bV5CSType;
+        public uint bV5Endpoint0, bV5Endpoint1, bV5Endpoint2, bV5Endpoint3, bV5Endpoint4, bV5Endpoint5, bV5Endpoint6, bV5Endpoint7, bV5Endpoint8;
+        public uint bV5GammaRed;
+        public uint bV5GammaGreen;
+        public uint bV5GammaBlue;
+        public uint bV5Intent;
+        public uint bV5ProfileData;
+        public uint bV5ProfileSize;
+        public uint bV5Reserved;
+    }
+
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern bool Shell_NotifyIconW(uint dwMessage, ref NOTIFYICONDATAW lpData);
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern IntPtr LoadImageW(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint ExtractIconExW(string lpszFile, int nIconIndex, out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIcons);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CreateIconIndirect(ref ICONINFO icon);
 
     [DllImport("user32.dll")]
     private static extern bool DestroyIcon(IntPtr hIcon);
 
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool PostMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPV5HEADER pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateBitmap(int nWidth, int nHeight, uint cPlanes, uint cBitsPerPel, IntPtr lpvBits);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteObject(IntPtr hObject);
+
     private readonly Action _onRestoreRequested;
     private readonly Action _onContextMenuRequested;
     private HwndSource? _hwndSource;
+    private IntPtr _hwnd;
     private IntPtr _hIcon;
     private NOTIFYICONDATAW _nid;
     private bool _isAdded;
@@ -82,30 +141,121 @@ public sealed class SystemTrayService : IDisposable
         _onContextMenuRequested = onContextMenuRequested;
 
         var helper = new WindowInteropHelper(window);
-        IntPtr hwnd = helper.EnsureHandle();
-        _hwndSource = HwndSource.FromHwnd(hwnd);
+        _hwnd = helper.EnsureHandle();
+        _hwndSource = HwndSource.FromHwnd(_hwnd);
         _hwndSource?.AddHook(WndProc);
 
-        string icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
-        if (File.Exists(icoPath))
-        {
-            _hIcon = LoadImageW(IntPtr.Zero, icoPath, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
-        }
+        _hIcon = LoadTrayHIcon();
 
         _nid = new NOTIFYICONDATAW
         {
             cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
-            hWnd = hwnd,
+            hWnd = _hwnd,
             uID = 1,
             uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP,
             uCallbackMessage = WM_TRAYICON,
             hIcon = _hIcon,
-            szTip = "NovaGet — Akıllı İndirme Yöneticisi",
+            szTip = "NovaGet",
             szInfo = "",
             szInfoTitle = ""
         };
 
         _isAdded = Shell_NotifyIconW(NIM_ADD, ref _nid);
+    }
+
+    private static IntPtr LoadTrayHIcon()
+    {
+        // 1. Primary: Render 32x32 32-bit ARGB HICON directly from embedded WPF resource pack://application:,,,/Assets/icon.png
+        try
+        {
+            var streamInfo = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/icon.png"));
+            if (streamInfo?.Stream is not null)
+            {
+                using var stream = streamInfo.Stream;
+                var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                BitmapSource source = decoder.Frames[0];
+
+                const int size = 32;
+                if (source.PixelWidth != size || source.PixelHeight != size)
+                {
+                    source = new TransformedBitmap(source, new ScaleTransform(
+                        (double)size / source.PixelWidth,
+                        (double)size / source.PixelHeight));
+                }
+
+                var formatted = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+                int stride = size * 4;
+                byte[] pixels = new byte[size * stride];
+                formatted.CopyPixels(pixels, stride, 0);
+
+                var bmi = new BITMAPV5HEADER
+                {
+                    bV5Size = (uint)Marshal.SizeOf<BITMAPV5HEADER>(),
+                    bV5Width = size,
+                    bV5Height = -size, // top-down DIB
+                    bV5Planes = 1,
+                    bV5BitCount = 32,
+                    bV5Compression = 3, // BI_BITFIELDS
+                    bV5RedMask = 0x00FF0000,
+                    bV5GreenMask = 0x0000FF00,
+                    bV5BlueMask = 0x000000FF,
+                    bV5AlphaMask = 0xFF000000
+                };
+
+                IntPtr hbmColor = CreateDIBSection(IntPtr.Zero, ref bmi, 0, out IntPtr bits, IntPtr.Zero, 0);
+                if (hbmColor != IntPtr.Zero && bits != IntPtr.Zero)
+                {
+                    Marshal.Copy(pixels, 0, bits, pixels.Length);
+                    IntPtr hbmMask = CreateBitmap(size, size, 1, 1, IntPtr.Zero);
+                    var ii = new ICONINFO
+                    {
+                        fIcon = true,
+                        hbmColor = hbmColor,
+                        hbmMask = hbmMask
+                    };
+                    IntPtr hIcon = CreateIconIndirect(ref ii);
+                    DeleteObject(hbmColor);
+                    if (hbmMask != IntPtr.Zero) DeleteObject(hbmMask);
+                    if (hIcon != IntPtr.Zero) return hIcon;
+                }
+            }
+        }
+        catch { }
+
+        // 2. Fallback: Extract icon embedded in current executable
+        try
+        {
+            string? exePath = Environment.ProcessPath;
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                ExtractIconExW(exePath, 0, out IntPtr large, out IntPtr small, 1);
+                if (small != IntPtr.Zero)
+                {
+                    if (large != IntPtr.Zero) DestroyIcon(large);
+                    return small;
+                }
+                if (large != IntPtr.Zero) return large;
+            }
+        }
+        catch { }
+
+        return IntPtr.Zero;
+    }
+
+    public void PrepareForContextMenu()
+    {
+        if (_hwnd != IntPtr.Zero)
+        {
+            SetForegroundWindow(_hwnd);
+        }
+    }
+
+    public void CompleteContextMenu()
+    {
+        if (_hwnd != IntPtr.Zero)
+        {
+            PostMessageW(_hwnd, WM_NULL, IntPtr.Zero, IntPtr.Zero);
+        }
     }
 
     public void ShowNotification(string title, string message)

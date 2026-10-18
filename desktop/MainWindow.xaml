@@ -253,6 +253,120 @@
             </Setter>
         </Style>
 
+        <!-- Custom Dark System Tray ContextMenu & MenuItem Styles (Zero Left Gutter) -->
+        <Style x:Key="TrayContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="HasDropShadow" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="#0B1120"
+                                BorderBrush="#23324B"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="6"
+                                Margin="10"
+                                MinWidth="215">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.65"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <!-- Mini Brand Header -->
+                                <Border Background="#111A2E" CornerRadius="7" Padding="10,7" Margin="0,0,0,5">
+                                    <Grid>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Image Source="Assets/icon.png" Width="16" Height="16" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <TextBlock Text="NovaGet" Foreground="#F8FAFC" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <Border Background="#0D2818" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="6,1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="AKTİF" Foreground="#34D399" FontSize="9.5" FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </StackPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TrayMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Bd"
+                                Background="Transparent"
+                                CornerRadius="7"
+                                Padding="10,8"
+                                Margin="0,1">
+                            <ContentPresenter ContentSource="Header"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#38BDF8"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#38BDF8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TrayDangerMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource TrayMenuItemStyle}">
+            <Setter Property="Foreground" Value="#FCA5A5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Bd"
+                                Background="Transparent"
+                                CornerRadius="7"
+                                Padding="10,8"
+                                Margin="0,1">
+                            <ContentPresenter ContentSource="Header"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2D1219"/>
+                                <Setter Property="Foreground" Value="#F87171"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2D1219"/>
+                                <Setter Property="Foreground" Value="#F87171"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TraySeparatorStyle" TargetType="Separator">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Background="#1E293B" Margin="4,4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Smooth Progress Bar -->
         <Style x:Key="ModernProgressBar" TargetType="ProgressBar">
             <Setter Property="Background" Value="#090D16"/>

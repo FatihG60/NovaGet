@@ -211,19 +211,56 @@ public partial class MainWindow : Window
 
     private void ShowTrayContextMenu()
     {
-        var menu = new ContextMenu();
+        _trayService?.PrepareForContextMenu();
 
-        var showItem = new MenuItem { Header = "⚡ NovaGet'i Göster", FontWeight = FontWeights.Bold };
+        var menu = new ContextMenu
+        {
+            Style = (Style)FindResource("TrayContextMenuStyle"),
+            Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint
+        };
+
+        var itemStyle = (Style)FindResource("TrayMenuItemStyle");
+        var dangerStyle = (Style)FindResource("TrayDangerMenuItemStyle");
+        var sepStyle = (Style)FindResource("TraySeparatorStyle");
+
+        var showItem = new MenuItem
+        {
+            Header = "⚡  NovaGet Arayüzünü Aç",
+            Style = itemStyle,
+            FontWeight = FontWeights.SemiBold
+        };
         showItem.Click += (_, _) => RestoreFromTray();
         menu.Items.Add(showItem);
 
-        var folderItem = new MenuItem { Header = "📂 İndirilenler Klasörünü Aç" };
+        var folderItem = new MenuItem
+        {
+            Header = "📂  İndirilenler Klasörünü Aç",
+            Style = itemStyle
+        };
         folderItem.Click += (_, _) => OpenDownloadsFolder();
         menu.Items.Add(folderItem);
 
-        menu.Items.Add(new Separator());
+        var settingsItem = new MenuItem
+        {
+            Header = "⚙️  Ayarlar",
+            Style = itemStyle
+        };
+        settingsItem.Click += (_, _) =>
+        {
+            RestoreFromTray();
+            ApplySettingsToUi();
+            SettingsModalOverlay.Visibility = Visibility.Visible;
+        };
+        menu.Items.Add(settingsItem);
 
-        var exitItem = new MenuItem { Header = "❌ Tamamen Çıkış Yap" };
+        menu.Items.Add(new Separator { Style = sepStyle });
+
+        var exitItem = new MenuItem
+        {
+            Header = "✕  Tamamen Çıkış Yap",
+            Style = dangerStyle,
+            FontWeight = FontWeights.SemiBold
+        };
         exitItem.Click += (_, _) =>
         {
             _isExplicitExit = true;
@@ -231,6 +268,7 @@ public partial class MainWindow : Window
         };
         menu.Items.Add(exitItem);
 
+        menu.Closed += (_, _) => _trayService?.CompleteContextMenu();
         menu.IsOpen = true;
     }
 
