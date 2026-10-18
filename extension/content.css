@@ -1,0 +1,96 @@
+/* MyIDM Video Overlay Sniffer Styles */
+.myidm-video-container {
+  position: relative !important;
+}
+
+.myidm-download-btn {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 2147483646 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: rgba(11, 17, 32, 0.92) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.2) !important;
+  border-radius: 20px !important;
+  padding: 6px 12px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  opacity: 0.88 !important;
+  pointer-events: auto !important;
+}
+
+.myidm-download-btn:hover {
+  opacity: 1 !important;
+  transform: translateY(-1px) scale(1.03) !important;
+  background: rgba(15, 23, 42, 0.97) !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.4) !important;
+}
+
+.myidm-download-btn:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+.myidm-btn-icon {
+  width: 14px !important;
+  height: 14px !important;
+  fill: none !important;
+  stroke: #38BDF8 !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: drop-shadow(0 0 4px #0284C7) !important;
+}
+
+.myidm-btn-badge {
+  background: linear-gradient(135deg, #0284C7, #6366F1) !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.myidm-quality-select {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #E2E8F0 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-radius: 8px !important;
+  padding: 2px 5px !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  cursor: pointer !important;
+  height: 20px !important;
+}
+
+.myidm-quality-select:hover {
+  border-color: #38BDF8 !important;
+}
+
+.myidm-btn-close {
+  margin-left: 3px !important;
+  color: #94A3B8 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  padding: 0 2px !important;
+  border-radius: 4px !important;
+}
+
+.myidm-btn-close:hover {
+  color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+}

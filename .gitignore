@@ -1,0 +1,32 @@
+## .NET Build Outputs & Caches
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rust Build Outputs
+target/
+**/target/
+
+## Benchmark & Temp Outputs
+bench_out/
+**/bench_out/
+*.bin
+*.tmp
+*.seg
+.hls_cache*/
+*.log
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+
+## OS Generated
+Thumbs.db
+.DS_Store
+Desktop.ini
